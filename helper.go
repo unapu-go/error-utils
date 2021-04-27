@@ -12,11 +12,6 @@ func WalkErr(cb func(err error) (stop bool), errs ...error) (stop bool) {
 			return true
 		}
 
-		if err, ok := err.(interface{ Err() error }); ok {
-			if WalkErr(cb, err.Err()) {
-				return true
-			}
-		}
 		if err, ok := err.(Causer); ok {
 			if WalkErr(cb, err.Cause()) {
 				return true
@@ -33,6 +28,13 @@ func WalkErr(cb func(err error) (stop bool), errs ...error) (stop bool) {
 			}
 		} else if errs, ok := err.(interface{ GetErrors() []error }); ok {
 			if WalkErr(cb, errs.GetErrors()...) {
+				return true
+			}
+		} else if err2, ok := err.(interface{ Err() error }); ok {
+			if err2.Err() == err {
+				return true
+			}
+			if WalkErr(cb, err2.Err()) {
 				return true
 			}
 		}
